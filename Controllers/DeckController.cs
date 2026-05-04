@@ -4,6 +4,7 @@ using Microsoft.EntityFrameworkCore;
 using YugiohDeck.API.Data;
 using YugiohDeck.API.Models;
 using YugiohDeck.API.Models.Dto;
+using YugiohDeck.API.Services;
 
 namespace YugiohDeck.API.Controllers;
 
@@ -13,14 +14,15 @@ public class DecksController : ControllerBase
 {
     private readonly AppDbContext _context;
     private readonly IMapper _mapper;
+    private readonly DeckService _deckService;
 
-    public DecksController(AppDbContext context, IMapper mapper)
+    public DecksController(AppDbContext context, IMapper mapper, DeckService deckService)
     {
         _context = context;
         _mapper = mapper;
+        _deckService = deckService;
     }
 
-    // GET: api/decks
     [HttpGet]
     public async Task<ActionResult<IEnumerable<DeckReadDto>>> GetDecks()
     {
@@ -29,11 +31,9 @@ public class DecksController : ControllerBase
             .OrderByDescending(d => d.DataCriacao)
             .ToListAsync();
 
-        // Mapeia a lista de entidades para uma lista de DTOs
         return Ok(_mapper.Map<IEnumerable<DeckReadDto>>(decks));
     }
 
-    // GET: api/decks/5
     [HttpGet("{id}")]
     public async Task<ActionResult<DeckReadDto>> GetDeck(int id)
     {
@@ -45,42 +45,38 @@ public class DecksController : ControllerBase
 
         if (deck == null) return NotFound();
 
+        // CHAMA O SERVICE PARA AUTO-ATUALIZAÇÃO INVISÍVEL DAS CARTAS
+        await _deckService.UpdateDeckCardsIfNeededAsync(deck);
+
         return Ok(_mapper.Map<DeckReadDto>(deck));
     }
 
-    // POST: api/decks
     [HttpPost]
     public async Task<ActionResult<DeckReadDto>> PostDeck([FromBody] DeckSaveDto deckDto)
     {
-        // Converte o DTO para a Entidade
         var deck = _mapper.Map<Deck>(deckDto);
 
-        // A configuração padrão já pode vir do DTO ou ser setada aqui
         if (deck.Configuration == null)
         {
-            deck.Configuration = new DeckConfiguration(); // Usa os padrões do construtor
+            deck.Configuration = new DeckConfiguration();
         }
 
         _context.Decks.Add(deck);
         await _context.SaveChangesAsync();
 
-        // Mapeia de volta para o DTO de leitura para retornar ao usuário
         var deckRead = _mapper.Map<DeckReadDto>(deck);
         return CreatedAtAction(nameof(GetDeck), new { id = deck.Id }, deckRead);
     }
 
-    // PUT: api/decks/5
     [HttpPut("{id}")]
     public async Task<IActionResult> PutDeck(int id, [FromBody] DeckSaveDto deckDto)
     {
-        // 1. Busca o deck incluindo a configuração
         var deckExistente = await _context.Decks
             .Include(d => d.Configuration)
             .FirstOrDefaultAsync(d => d.Id == id);
 
         if (deckExistente == null) return NotFound();
 
-        // 2. A MÁGICA: Atualiza o deckExistente com os dados do DTO
         _mapper.Map(deckDto, deckExistente);
 
         try
@@ -95,7 +91,6 @@ public class DecksController : ControllerBase
         return NoContent();
     }
 
-    // DELETE: api/decks/5
     [HttpDelete("{id}")]
     public async Task<IActionResult> DeleteDeck(int id)
     {
@@ -104,6 +99,30 @@ public class DecksController : ControllerBase
 
         _context.Decks.Remove(deck);
         await _context.SaveChangesAsync();
+
+        return NoContent();
+    }
+
+    // ==========================================
+    // NOVOS MÉTODOS PARA GERENCIAR AS CARTAS
+    // ==========================================
+
+    [HttpPost("{id}/cards")]
+    public async Task<IActionResult> AddCardToDeck(int id, [FromBody] DeckCardDto dto)
+    {
+        var result = await _deckService.AddCardToDeckAsync(id, dto);
+
+        if (!result.Success) return BadRequest(result.Message);
+
+        return Ok(new { message = result.Message });
+    }
+
+    [HttpDelete("{id}/cards/{cardId}")]
+    public async Task<IActionResult> RemoveCardFromDeck(int id, int cardId, [FromQuery] string slot = "Main")
+    {
+        var result = await _deckService.RemoveCardFromDeckAsync(id, cardId, slot);
+
+        if (!result.Success) return NotFound(result.Message);
 
         return NoContent();
     }
