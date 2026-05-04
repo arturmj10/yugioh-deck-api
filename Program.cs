@@ -1,5 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using YugiohDeck.API.Data;
+using YugiohDeck.API.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -22,6 +23,9 @@ builder.Services.AddCors(options =>
                .AllowAnyHeader();
     });
 });
+
+builder.Services.AddHttpClient<YgoApiService>();
+builder.Services.AddScoped<DeckService>();
 
 var app = builder.Build();
 

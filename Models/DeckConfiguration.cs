@@ -13,7 +13,8 @@ public class DeckConfiguration
     
     [Key, ForeignKey("Deck")]
     public int DeckId { get; set; }
-    public virtual Deck Deck { get; set; } = null!;
+
+    public virtual Deck Deck { get; set; }
 
     public string Formato { get; set; }
 
