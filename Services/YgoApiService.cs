@@ -39,6 +39,9 @@ public class YgoApiService
                 Def = apiCard.Def,
                 Level = apiCard.Level,
                 ImageUrl = apiCard.CardImages.FirstOrDefault()?.ImageUrl,
+                BanlistTcg = apiCard.BanlistInfo?.BanTcg,
+                BanlistOcg = apiCard.BanlistInfo?.BanOcg,
+                BanlistGoat = apiCard.BanlistInfo?.BanGoat,
                 LastUpdate = DateTime.UtcNow
             }).ToList();
         }
@@ -74,6 +77,11 @@ public class YgoApiService
                 Def = apiCard.Def,
                 Level = apiCard.Level,
                 ImageUrl = apiCard.CardImages.FirstOrDefault()?.ImageUrl,
+                
+                BanlistTcg = apiCard.BanlistInfo?.BanTcg,
+                BanlistOcg = apiCard.BanlistInfo?.BanOcg,
+                BanlistGoat = apiCard.BanlistInfo?.BanGoat,
+                
                 LastUpdate = DateTime.UtcNow
             };
         }
@@ -82,10 +90,7 @@ public class YgoApiService
             return null;
         }
     }
-
-    // =========================================================================
-    // Modelos Privados para Desserialização do JSON (Evita sujar a pasta Models)
-    // =========================================================================
+    
     private record ApiResponse
     {
         [JsonPropertyName("data")]
@@ -105,10 +110,18 @@ public class YgoApiService
         [JsonPropertyName("def")] public int? Def { get; init; }
         [JsonPropertyName("level")] public int? Level { get; init; }
         [JsonPropertyName("card_images")] public List<ApiCardImage> CardImages { get; init; } = new();
+        [JsonPropertyName("banlist_info")] public ApiBanlistInfo? BanlistInfo { get; init; }
     }
 
     private record ApiCardImage
     {
         [JsonPropertyName("image_url")] public string ImageUrl { get; init; } = string.Empty;
+    }
+    
+    private record ApiBanlistInfo
+    {
+        [JsonPropertyName("ban_tcg")] public string? BanTcg { get; init; }
+        [JsonPropertyName("ban_ocg")] public string? BanOcg { get; init; }
+        [JsonPropertyName("ban_goat")] public string? BanGoat { get; init; }
     }
 }

@@ -14,4 +14,10 @@ public class CardDto
     public int? Level { get; set; }
     public string? ImageUrl { get; set; }
     public DateTime LastUpdate { get; set; }
+    
+    public string? BanlistTcg { get; set; }
+    
+    public string? BanlistOcg { get; set; }
+    
+    public string? BanlistGoat { get; set; }
 }
