@@ -8,6 +8,8 @@ public class Deck
 {
     [Key]
     public int Id { get; set; }
+    public string UserId { get; set; } = string.Empty;
+    
     public string Nome { get; set; }
     public string? Descricao { get; set; }
     public DateTime DataCriacao { get; set; } = DateTime.UtcNow;
