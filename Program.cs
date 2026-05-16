@@ -1,6 +1,8 @@
 using Microsoft.EntityFrameworkCore;
 using YugiohDeck.API.Data;
 using YugiohDeck.API.Services;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.IdentityModel.Tokens;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -24,6 +26,22 @@ builder.Services.AddCors(options =>
     });
 });
 
+builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+    .AddJwtBearer(options =>
+    {
+        options.Authority = builder.Configuration["Jwt:Authority"];
+        
+        options.RequireHttpsMetadata = false; 
+
+        options.TokenValidationParameters = new TokenValidationParameters
+        {
+            ValidateAudience = false,
+            ValidateIssuer = true,
+            ValidIssuer = builder.Configuration["Jwt:Authority"]
+        };
+    });
+
+builder.Services.AddAuthorization();
 builder.Services.AddHttpClient<YgoApiService>();
 builder.Services.AddScoped<DeckService>();
 
@@ -36,6 +54,9 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseCors("PermitirTudo");
+
+app.UseAuthentication(); 
+app.UseAuthorization();
 
 app.MapControllers();
 

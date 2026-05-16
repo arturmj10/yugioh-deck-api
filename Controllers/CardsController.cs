@@ -1,11 +1,13 @@
 using Microsoft.AspNetCore.Mvc;
 using YugiohDeck.API.Models.Dto;
 using YugiohDeck.API.Services;
+using Microsoft.AspNetCore.Authorization;
 
 namespace YugiohDeck.API.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]
+[Authorize]
 public class CardsController : ControllerBase
 {
     private readonly YgoApiService _ygoApiService;
